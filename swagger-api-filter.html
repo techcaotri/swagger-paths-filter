@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swagger JSON Path Filter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .output-section {
+            margin-top: 30px;
+        }
+
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .error {
+            background: #fed7d7;
+            border-color: #fc8181;
+            color: #c53030;
+        }
+
+        .success {
+            background: #c6f6d5;
+            border-color: #68d391;
+            color: #2f855a;
+        }
+
+        .info {
+            background: #bee3f8;
+            border-color: #63b3ed;
+            color: #2c5282;
+        }
+
+        .paths-input {
+            height: 150px;
+            resize: vertical;
+        }
+
+        .json-input {
+            height: 200px;
+            resize: vertical;
+        }
+
+        .json-output {
+            height: 300px;
+            resize: vertical;
+            background: #1a202c;
+            color: #e2e8f0;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            background: #e2e8f0;
+            border: 2px dashed #a0aec0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .file-input-wrapper:hover {
+            background: #edf2f7;
+            border-color: #667eea;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .summary-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .summary-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.2em;
+        }
+
+        .summary-item p {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Swagger JSON Path Filter</h1>
+        
+        <div class="input-section">
+            <label for="fileInput">Upload Swagger/OpenAPI JSON File:</label>
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".json" />
+                <div>📁 Click to upload or drag & drop your Swagger JSON file</div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <label for="jsonInput">Or paste your Swagger JSON:</label>
+            <textarea id="jsonInput" class="json-input" placeholder="Paste your Swagger/OpenAPI JSON here..."></textarea>
+        </div>
+
+        <div class="input-section">
+            <label for="pathsInput">API Paths to Keep (one per line):</label>
+            <div style="margin-bottom: 10px;">
+                <label style="display: inline-flex; align-items: center; font-weight: normal; cursor: pointer;">
+                    <input type="checkbox" id="regexMode" style="margin-right: 8px; transform: scale(1.2);">
+                    Enable Regular Expression Matching
+                </label>
+            </div>
+            <textarea id="pathsInput" class="paths-input" placeholder="Enter the API paths you want to keep, for example:
+
+Exact matching:
+/users
+/users/{id}
+/products
+/products/{productId}/reviews
+
+Regex matching (check the box above):
+/users.*
+/products/\{[^}]+\}
+^/api/v[12]/.*
+/.*/(create|update|delete)$"></textarea>
+        </div>
+
+        <button onclick="analyzeSwagger()">🔍 Analyze Current Swagger</button>
+        <button onclick="filterSwagger()">🎯 Filter Swagger JSON</button>
+        <button onclick="downloadResult()">💾 Download Filtered JSON</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let originalSwagger = null;
+        let filteredSwagger = null;
+
+        // File upload handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('jsonInput').value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function showResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            results.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        function analyzeSwagger() {
+            try {
+                const jsonText = document.getElementById('jsonInput').value.trim();
+                if (!jsonText) {
+                    showResult('Please provide Swagger JSON content.', 'error');
+                    return;
+                }
+
+                originalSwagger = JSON.parse(jsonText);
+                
+                // Analyze the current swagger
+                const analysis = analyzeSwaggerContent(originalSwagger);
+                
+                let analysisHtml = '<div class="summary">';
+                analysisHtml += `<div class="summary-item"><h3>Total Paths</h3><p>${analysis.totalPaths}</p></div>`;
+                analysisHtml += `<div class="summary-item"><h3>Total Schemas</h3><p>${analysis.totalSchemas}</p></div>`;
+                analysisHtml += `<div class="summary-item"><h3>HTTP Methods</h3><p>${analysis.methods.length}</p></div>`;
+                analysisHtml += '</div>';
+
+                analysisHtml += '<h3>Available Paths:</h3><div style="background: #f8f9fa; padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto;">';
+                analysis.paths.forEach(path => {
+                    analysisHtml += `<div style="margin: 5px 0; font-family: monospace;">${path}</div>`;
+                });
+                analysisHtml += '</div>';
+
+                if (analysis.schemas.length > 0) {
+                    analysisHtml += '<h3>Available Schemas:</h3><div style="background: #f8f9fa; padding: 15px; border-radius: 8px; max-height: 150px; overflow-y: auto;">';
+                    analysis.schemas.slice(0, 20).forEach(schema => {
+                        analysisHtml += `<div style="margin: 2px 0; font-family: monospace; font-size: 12px;">${schema}</div>`;
+                    });
+                    if (analysis.schemas.length > 20) {
+                        analysisHtml += `<div style="margin-top: 10px; font-style: italic;">... and ${analysis.schemas.length - 20} more schemas</div>`;
+                    }
+                    analysisHtml += '</div>';
+                }
+
+                showResult(analysisHtml, 'info');
+                
+            } catch (error) {
+                showResult(`Error analyzing Swagger: ${error.message}`, 'error');
+            }
+        }
+
+        function analyzeSwaggerContent(swagger) {
+            const paths = Object.keys(swagger.paths || {});
+            const schemas = swagger.components?.schemas ? Object.keys(swagger.components.schemas) : 
+                           swagger.definitions ? Object.keys(swagger.definitions) : [];
+            
+            const methods = new Set();
+            paths.forEach(path => {
+                Object.keys(swagger.paths[path]).forEach(method => {
+                    if (['get', 'post', 'put', 'delete', 'patch', 'options', 'head'].includes(method.toLowerCase())) {
+                        methods.add(method.toUpperCase());
+                    }
+                });
+            });
+
+            return {
+                totalPaths: paths.length,
+                totalSchemas: schemas.length,
+                paths: paths,
+                schemas: schemas,
+                methods: Array.from(methods)
+            };
+        }
+
+        function filterSwagger() {
+            try {
+                const jsonText = document.getElementById('jsonInput').value.trim();
+                const pathsText = document.getElementById('pathsInput').value.trim();
+                const regexMode = document.getElementById('regexMode').checked;
+
+                if (!jsonText) {
+                    showResult('Please provide Swagger JSON content.', 'error');
+                    return;
+                }
+
+                if (!pathsText) {
+                    showResult('Please specify which paths to keep.', 'error');
+                    return;
+                }
+
+                const swagger = JSON.parse(jsonText);
+                const pathsToKeep = pathsText.split('\n').map(p => p.trim()).filter(p => p);
+
+                filteredSwagger = filterSwaggerPaths(swagger, pathsToKeep, regexMode);
+                
+                const analysis = analyzeSwaggerContent(filteredSwagger);
+                
+                let resultHtml = `<h3>✅ Filtering Complete! ${regexMode ? '(Regex Mode)' : '(Exact Mode)'}</h3>`;
+                resultHtml += '<div class="summary">';
+                resultHtml += `<div class="summary-item"><h3>Kept Paths</h3><p>${analysis.totalPaths}</p></div>`;
+                resultHtml += `<div class="summary-item"><h3>Kept Schemas</h3><p>${analysis.totalSchemas}</p></div>`;
+                resultHtml += '</div>';
+
+                if (analysis.totalPaths > 0) {
+                    resultHtml += '<h3>Matched Paths:</h3><div style="background: #f8f9fa; padding: 15px; border-radius: 8px; max-height: 150px; overflow-y: auto;">';
+                    analysis.paths.forEach(path => {
+                        resultHtml += `<div style="margin: 3px 0; font-family: monospace; font-size: 14px;">${path}</div>`;
+                    });
+                    resultHtml += '</div>';
+                }
+
+                resultHtml += '<h3>Filtered JSON:</h3>';
+                resultHtml += `<textarea class="json-output" readonly>${JSON.stringify(filteredSwagger, null, 2)}</textarea>`;
+
+                showResult(resultHtml, 'success');
+
+            } catch (error) {
+                showResult(`Error filtering Swagger: ${error.message}`, 'error');
+            }
+        }
+
+        function filterSwaggerPaths(swagger, pathsToKeep, regexMode = false) {
+            // Create a copy of the original swagger
+            const filtered = JSON.parse(JSON.stringify(swagger));
+            
+            // Filter paths
+            const originalPaths = filtered.paths || {};
+            const newPaths = {};
+            const matchedPaths = [];
+            
+            if (regexMode) {
+                // Compile regex patterns
+                const regexPatterns = pathsToKeep.map(pattern => {
+                    try {
+                        return new RegExp(pattern);
+                    } catch (error) {
+                        console.warn(`Invalid regex pattern: ${pattern}`);
+                        return null;
+                    }
+                }).filter(regex => regex !== null);
+
+                // Test each path against all regex patterns
+                Object.keys(originalPaths).forEach(path => {
+                    const isMatch = regexPatterns.some(regex => regex.test(path));
+                    if (isMatch) {
+                        newPaths[path] = originalPaths[path];
+                        matchedPaths.push(path);
+                    }
+                });
+            } else {
+                // Exact matching (original behavior)
+                pathsToKeep.forEach(pathToKeep => {
+                    if (originalPaths[pathToKeep]) {
+                        newPaths[pathToKeep] = originalPaths[pathToKeep];
+                        matchedPaths.push(pathToKeep);
+                    }
+                });
+            }
+            
+            filtered.paths = newPaths;
+
+            // Find all schema references used by the kept paths
+            const usedSchemas = new Set();
+            findAllSchemaReferences(newPaths, usedSchemas);
+
+            // Filter schemas based on usage
+            if (filtered.components?.schemas) {
+                const newSchemas = {};
+                Object.keys(filtered.components.schemas).forEach(schemaName => {
+                    if (usedSchemas.has(schemaName)) {
+                        newSchemas[schemaName] = filtered.components.schemas[schemaName];
+                        // Also find nested references within this schema
+                        findAllSchemaReferences(filtered.components.schemas[schemaName], usedSchemas);
+                    }
+                });
+                
+                // Include any newly found schemas
+                Object.keys(filtered.components.schemas).forEach(schemaName => {
+                    if (usedSchemas.has(schemaName) && !newSchemas[schemaName]) {
+                        newSchemas[schemaName] = filtered.components.schemas[schemaName];
+                    }
+                });
+                
+                filtered.components.schemas = newSchemas;
+            }
+
+            // Handle Swagger 2.0 definitions
+            if (filtered.definitions) {
+                const newDefinitions = {};
+                Object.keys(filtered.definitions).forEach(defName => {
+                    if (usedSchemas.has(defName)) {
+                        newDefinitions[defName] = filtered.definitions[defName];
+                    }
+                });
+                filtered.definitions = newDefinitions;
+            }
+
+            return filtered;
+        }
+
+        function findAllSchemaReferences(obj, usedSchemas, visited = new Set()) {
+            if (!obj || typeof obj !== 'object') return;
+            
+            // Prevent infinite recursion
+            const objKey = JSON.stringify(obj);
+            if (visited.has(objKey)) return;
+            visited.add(objKey);
+
+            if (Array.isArray(obj)) {
+                obj.forEach(item => findAllSchemaReferences(item, usedSchemas, visited));
+                return;
+            }
+
+            Object.keys(obj).forEach(key => {
+                if (key === '$ref' && typeof obj[key] === 'string') {
+                    // Extract schema name from $ref
+                    const ref = obj[key];
+                    let schemaName = null;
+                    
+                    if (ref.startsWith('#/components/schemas/')) {
+                        schemaName = ref.replace('#/components/schemas/', '');
+                    } else if (ref.startsWith('#/definitions/')) {
+                        schemaName = ref.replace('#/definitions/', '');
+                    }
+                    
+                    if (schemaName) {
+                        usedSchemas.add(schemaName);
+                    }
+                } else {
+                    findAllSchemaReferences(obj[key], usedSchemas, visited);
+                }
+            });
+        }
+
+        function downloadResult() {
+            if (!filteredSwagger) {
+                showResult('No filtered result to download. Please filter the Swagger first.', 'error');
+                return;
+            }
+
+            const jsonString = JSON.stringify(filteredSwagger, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'filtered-swagger.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showResult('✅ Filtered Swagger JSON downloaded successfully!', 'success');
+        }
+    </script>
+</body>
+</html>
